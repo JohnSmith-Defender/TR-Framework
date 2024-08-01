@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -22,6 +23,7 @@ public class PlayerController : MonoBehaviour
     [Header("Physics")]
     public float gravity = 9.81f;
     public float deathVelocity = 12f;
+    public float pushPower = 100f;
     [Header("Jump Speeds")]
     public float jumpYVel = 5f;
     public float jumpZBoost = 0.8f;
@@ -81,6 +83,7 @@ public class PlayerController : MonoBehaviour
     [HideInInspector]
     public bool useRootMotion = true;
     private RaycastHit groundHit;
+    private GameObject pushObject;
 
     private void Awake()
     {
@@ -145,8 +148,21 @@ public class PlayerController : MonoBehaviour
 
         UpdateAnimator();
 
+        LookForPushObject();
+        IsPushPullFinished();
+
         if (charControl.enabled)
             charControl.Move((anim.applyRootMotion ? Vector3.Scale(velocity, Vector3.up) : velocity) * Time.deltaTime);
+
+        if (Input.GetKeyDown(playerInput.push))
+        {
+            Debug.Log(pushObject.name);
+            PushObject();
+        }
+        else if(Input.GetKeyDown(playerInput.pull))
+        {
+            PullObject();
+        }
     }
 
     private void CheckForGround()
@@ -562,6 +578,52 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 direction = Vector3.Scale((target - transform.position), new Vector3(1.0f, 0.0f, 1.0f));
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+    }
+
+    private void LookForPushObject()
+    {
+        RaycastHit hitOut;
+        pushObject = null;
+        if (!Physics.Raycast(transform.position, transform.forward, out hitOut, 2.0f)) return;
+        if (hitOut.collider.gameObject.CompareTag("Pushable"))
+        {
+            pushObject = hitOut.collider.gameObject;
+        }
+    }
+
+    public void PushObject()
+    {
+        Debug.Log(pushObject.name);
+        if (pushObject != null)
+        {
+            anim.SetBool("isWaiting", true);
+            anim.SetTrigger("PushObject");
+        }
+    }
+
+    public void PullObject()
+    {
+        if (pushObject == null) return;
+        anim.SetBool("isWaiting", true);
+        anim.SetTrigger("PullObject");
+    }
+
+    public void IsPushPullFinished()
+    {
+        if(pushObject!=null)
+        {
+            if ((anim.GetCurrentAnimatorStateInfo(0).IsName("PushObject") || anim.GetCurrentAnimatorStateInfo(0).IsName("PullObject")) && anim.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.95f)
+            {
+                pushObject.transform.parent = null;
+                pushObject = null;
+                anim.SetBool("isWaiting", false);
+            }
+            else
+            {
+                if (anim.GetCurrentAnimatorStateInfo(0).IsName("PushObject") || anim.GetCurrentAnimatorStateInfo(0).IsName("PullObject"))
+                    pushObject.transform.parent = transform;
+            }
+        }
     }
 
     public void ApplyGravity(float amount)

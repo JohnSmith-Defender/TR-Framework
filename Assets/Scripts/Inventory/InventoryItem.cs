@@ -10,25 +10,34 @@ public abstract class InventoryItem : MonoBehaviour
     public Sprite sprite;
     public GameObject inventoryModel;
 
+    private PlayerInventory inventory;
+    private PickItemCam pickItemCam;
+
     private void Start()
     {
-        
+        pickItemCam = FindObjectOfType<PickItemCam>();
     }
 
     private void OnTriggerStay(Collider other)
     {
         if (other.transform.CompareTag("Player"))
         {
-            if (Input.GetButtonDown("Action"))
+            if (Input.GetButtonDown("Action") && inventory == null)
             {
-                PlayerInventory inventory =  other.gameObject.GetComponent<PlayerInventory>();
+                inventory = other.gameObject.GetComponent<PlayerInventory>();
                 Animator anim = other.gameObject.GetComponent<Animator>();
-
-                inventory.AddItem(this);
                 anim.SetTrigger("PickUp");
-                this.gameObject.SetActive(false);
+                Invoke("PickedUp", 3f);
             }
         }
+    }
+
+    private void PickedUp()
+    {
+        inventory.AddItem(this);
+        pickItemCam.SetAndEnable(gameObject);
+        this.gameObject.SetActive(false);
+        inventory = null;
     }
 
     public abstract void Use(PlayerController player);

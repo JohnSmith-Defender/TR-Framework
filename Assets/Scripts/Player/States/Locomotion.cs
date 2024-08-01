@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -151,15 +152,19 @@ public class Locomotion : StateBase<PlayerController>
 
     private void LookForStepLedges(PlayerController player)
     {
-        if (Input.GetButtonDown("Jump") && !isRootMotion && player.Anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+        if(player.Anim.GetCurrentAnimatorStateInfo(0).IsName("RunWalk") && ledgeDetector.FindPlatformInfront(player.transform.position, player.transform.forward, 2f))
         {
-            isRootMotion = ledgeDetector.FindPlatformInfront(player.transform.position,
-                player.transform.forward, 2f);
+            player.Anim.SetBool("isWaiting", true);
+            waitingBool = true;
+        }
 
+        if (!isRootMotion && player.Anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+        {
+            isRootMotion = ledgeDetector.FindPlatformInfront(player.transform.position,player.transform.forward, 2f);
             if (isRootMotion)
             {
                 float height = ledgeDetector.GrabPoint.y - player.transform.position.y;
-
+                Debug.Log(height);
                 // step can be runned over
                 if (height < player.charControl.stepOffset)
                 {
