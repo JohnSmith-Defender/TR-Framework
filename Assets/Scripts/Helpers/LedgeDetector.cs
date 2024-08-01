@@ -69,7 +69,6 @@ public class LedgeDetector
                     Debug.Log("returning true m8");
                     return true;
                 }
-                
             }
             else if (hHit.collider.CompareTag("Freeclimb") && !ignoreFree)
             {
@@ -81,6 +80,7 @@ public class LedgeDetector
                 return true;
             }
         }
+        Debug.Log(grabPoint);
         return false;
     }
 
